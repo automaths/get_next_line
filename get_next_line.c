@@ -5,151 +5,103 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: nsartral <nsartral@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/05/09 08:34:42 by nsartral          #+#    #+#             */
-/*   Updated: 2022/05/09 10:00:05 by nsartral         ###   ########.fr       */
+/*   Created: 2022/05/10 00:50:44 by nsartral          #+#    #+#             */
+/*   Updated: 2022/05/10 00:52:54 by nsartral         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*ft_strchr(const char *s)
+char	*read_fd(int fd, char *buffer)
 {
-	char			*ptr;
-	int				i;
+	char	*tmp;
+	int		size;
 
-	ptr = NULL;
-	i = 0;
-	while (s[i])
-	{
-		if (s[i] == '\n')
-		{
-			ptr = (char *)(s + i + 1);
-			return (ptr);
-		}
-		i++;
-	}
-	return (ptr);
-}
-
-char	*get_the_line(char *tmp)
-{
-	char *line;
-	int n;
-	
-	n = 0;
-	if (!tmp)
-		return (NULL);
-	while (tmp[n] && tmp[n] != '\n')
-		n++;
-	if (tmp[n] == '\n')
-		n++;
-	line = (char *)malloc(sizeof(char) * (n + 1));
-	if (!line)
-		return (NULL);
-	line[n--] = '\0';
-	while (n >= 0)
-	{
-		line[n] = tmp[n];
-		n--;
-	}
-	return(line);
-}
-
-char *new_buffer(char *tmp)
-{
-	int i;
-	int j;
-	i = 0;
-	j = 0;
-	char *tmp2;
+	tmp = (char *)malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (tmp == NULL)
 		return (NULL);
-	while (tmp[i] && tmp[i] != '\n')
-		i++;
-	if (tmp[i] == '\n')
-		i++;
-	if (tmp[i])
+	size = 1;
+	while (ft_strchr(buffer) == NULL && size != 0)
 	{
-		while (tmp[i + j])
-			j++;
+		size = read(fd, tmp, BUFFER_SIZE);
+		if (size < 0)
+		{
+			free(tmp);
+			return (NULL);
+		}
+		tmp[size] = '\0';
+		buffer = ft_strjoin(buffer, tmp);
 	}
-	tmp2 = (char*)malloc(sizeof(char) * (j + 1));
-	if (!tmp2)
-		return (NULL);
-	tmp2[j--] = '\0';
-	while (j >= 0)
-	{
-		tmp2[j] = tmp[i+j];
-		j--;
-	}
-	return (tmp2);
+	free(tmp);
+	return (buffer);
 }
 
-char *get_next_line(int fd)
+char	*get_the_line(char *buffer)
 {
-	char	buffer[BUFFER_SIZE + 1];
-	static char *tmp = NULL;
-	char *tmp2;
-	char *line;
-	int size;
-	int n_read;
-	
-	if (fd < 0 || BUFFER_SIZE < 1)
-		return (NULL);
-	size = ft_strlen(tmp);
-	if (size == 0)
-	{
-		n_read = read(fd, buffer, BUFFER_SIZE);
-		if (n_read < 0)
-			return (NULL);
-		buffer[n_read] = '\0';
-		tmp = ft_strdup(buffer);
-		if (tmp == NULL)
-			return (NULL);
-	}
-	if (size > 0)
-	{
-		n_read = read(fd, buffer, BUFFER_SIZE);
-		buffer[n_read] = '\0';
-		if (n_read > 0)
-			tmp = ft_strjoin(tmp, buffer);
-		if (tmp == NULL)
-			return (NULL);
-	}
-	line = get_the_line(tmp);
-	tmp2 = new_buffer(tmp);
-	if (tmp)
-		free(tmp);
-	if (tmp2)
-	{
-		tmp = ft_strdup(tmp2);
-		free(tmp2);
-	}
-	//printf("\nTMP2%s\n", tmp2);
-	//printf("\nBUFFER%s\n", buffer);
-	//printf("\nLINE%s\n", line);
-	//printf("\nTMP%s\n", tmp);
-	return (line);
-}
-/*
-int     main(void)
-{
-	int fd;
-	char *buffer;
-	int i;
-	
-	fd = open("plaidoiries.txt", O_RDONLY);
-	if (fd < 0)
-		return (0);
+	int		i;
+	char	*str;
+
 	i = 0;
-	while (i < 5)
+	if (!buffer[i])
+		return (NULL);
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	str = (char *)malloc(sizeof(char) * (i + 2));
+	if (!str)
+		return (NULL);
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
 	{
-		buffer = get_next_line(fd);
-		printf("\n\nresult%i%s\n\n", i, buffer);
-		if (buffer != NULL)
-			free(buffer);
+		str[i] = buffer[i];
 		i++;
 	}
-	return (0);
+	if (buffer[i] == '\n')
+	{
+		str[i] = buffer[i];
+		i++;
+	}
+	str[i] = '\0';
+	return (str);
 }
-*/
+
+char	*new_buffer(char *buffer)
+{
+	int		n;
+	int		m;
+	int		i;
+	char	*new_buffer;
+
+	n = 0;
+	m = ft_strlen(buffer);
+	while (buffer[n] && buffer[n] != '\n')
+		n++;
+	if (buffer[n] == '\0')
+	{
+		free(buffer);
+		return (NULL);
+	}
+	new_buffer = (char *)malloc(sizeof(char) * (m - n + 1));
+	if (new_buffer == NULL)
+		return (NULL);
+	i = 0;
+	while (buffer[n++])
+		new_buffer[i++] = buffer[n];
+	new_buffer[i] = '\0';
+	free(buffer);
+	return (new_buffer);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*buffer;
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	buffer = read_fd(fd, buffer);
+	if (buffer == NULL)
+		return (NULL);
+	line = get_the_line(buffer);
+	buffer = new_buffer(buffer);
+	return (line);
+}
