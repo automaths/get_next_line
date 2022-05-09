@@ -39,6 +39,8 @@ char	*ft_strjoin(char *s1, char *s2)
 		j++;
 	}
 	str[i] = '\0';
+	if (s1)
+		free(s1);
 	return (str);
 }
 
@@ -182,7 +184,8 @@ int     main(void)
 	{
 		buffer = get_next_line(fd);
 		printf("\n\nresult%i%s\n\n", i, buffer);
-		free(buffer);
+		if (buffer != NULL)
+			free(buffer);
 		i++;
 	}
 	return (0);
